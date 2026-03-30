@@ -17,8 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"fmt"
 	"os"
+	"path"
+	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -70,20 +71,36 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+		// Find config directories.
+		for _, d := range findConfigDirs() {
+			viper.AddConfigPath(d)
+		}
 
-		// Search config in home directory with name ".pm" (without extension).
-		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".pm")
+		viper.SetConfigName("pm")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	err := viper.ReadInConfig()
+	cobra.CheckErr(err)
+}
+
+func findConfigDirs() []string {
+	dirs := []string{}
+
+	if xdgCfgDir := os.Getenv("XDG_CONFIG_HOME"); xdgCfgDir != "" {
+		dirs = append(dirs, xdgCfgDir)
 	}
+
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		if defCfgDir := path.Join(home, ".config"); !slices.Contains(dirs, defCfgDir) {
+			dirs = append(dirs, defCfgDir)
+		}
+	}
+
+	dirs = append(dirs, "/usr/local/etc", "/etc")
+
+	return dirs
 }
