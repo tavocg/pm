@@ -22,6 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.yaml.in/yaml/v3"
 )
 
 var cfgFile string
@@ -74,4 +75,14 @@ func initConfig() {
 	for _, path := range loadedFiles {
 		fmt.Fprintln(os.Stderr, "Using config file:", path)
 	}
+
+	settings := viper.AllSettings()
+	if len(settings) == 0 {
+		return
+	}
+
+	mergedConfig, err := yaml.Marshal(settings)
+	cobra.CheckErr(err)
+	fmt.Fprintln(os.Stderr, "Merged config:")
+	fmt.Fprint(os.Stderr, string(mergedConfig))
 }
