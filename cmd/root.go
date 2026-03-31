@@ -17,15 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"context"
 	"os"
 	"path"
 	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tavocg/pm/dispatcher"
+	"github.com/tavocg/pm/models"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+	orch    *models.Orchestrator
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -85,6 +91,8 @@ func initConfig() {
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
 	cobra.CheckErr(err)
+
+	initOrchestrator()
 }
 
 func findConfigDirs() []string {
@@ -103,4 +111,23 @@ func findConfigDirs() []string {
 	dirs = append(dirs, "/usr/local/etc", "/etc")
 
 	return dirs
+}
+
+func initOrchestrator() {
+	var cfg models.OrchestratorConfig
+	viper.Unmarshal(&cfg)
+
+	ctx := context.Background()
+	disp := dispatcher.NewUnixDispatcher(ctx)
+
+	params := &models.OrchestratorParams{
+		Cfg:        &cfg,
+		Dispatcher: disp,
+	}
+
+	var err error
+	orch, err = models.NewOrchestrator(params)
+	cobra.CheckErr(err)
+
+	orch.RemoveUnsupportedManagers()
 }

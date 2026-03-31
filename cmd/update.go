@@ -1,6 +1,5 @@
 /*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2026 Gustavo Calvo <tavo@tavo.cr>
 */
 package cmd
 
