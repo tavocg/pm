@@ -1,3 +1,5 @@
+//go:build unix
+
 package dispatcher
 
 import (

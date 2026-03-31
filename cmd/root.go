@@ -118,7 +118,7 @@ func initOrchestrator() {
 	viper.Unmarshal(&cfg)
 
 	ctx := context.Background()
-	disp := dispatcher.NewUnixDispatcher(ctx)
+	disp := dispatcher.DefaultDispatcher(ctx)
 
 	params := &models.OrchestratorParams{
 		Cfg:        &cfg,
