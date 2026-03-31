@@ -22,6 +22,10 @@ func (u unsupportedDispatcher) Run(string) error {
 	return u.err
 }
 
+func (u *unsupportedDispatcher) RunAsPrivileged(cmd string) error {
+	return u.err
+}
+
 func (u unsupportedDispatcher) WithStream(Streamer) Dispatcher {
 	return u
 }

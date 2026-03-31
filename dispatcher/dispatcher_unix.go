@@ -6,7 +6,6 @@ import (
 	"context"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 type UnixDispatcher struct {
@@ -16,6 +15,7 @@ type UnixDispatcher struct {
 
 func NewUnixDispatcher(ctx context.Context) *UnixDispatcher {
 	stream := Streamer{
+		Stdin:  os.Stdin,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	}
@@ -23,11 +23,29 @@ func NewUnixDispatcher(ctx context.Context) *UnixDispatcher {
 }
 
 func (u *UnixDispatcher) Run(cmd string) error {
-	name, arg, _ := strings.Cut(cmd, " ")
-	c := exec.CommandContext(u.ctx, name, arg)
+	c := exec.CommandContext(u.ctx, "sh", "-c", cmd)
+	c.Stdin = u.stream.Stdin
 	c.Stdout = u.stream.Stdout
 	c.Stderr = u.stream.Stderr
 	return c.Run()
+}
+
+func (u *UnixDispatcher) RunAsPrivileged(cmd string) error {
+	if os.Geteuid() == 0 {
+		return u.Run(cmd)
+	}
+
+	for _, helper := range []string{"doas", "sudo"} {
+		if _, err := exec.LookPath(helper); err == nil {
+			c := exec.CommandContext(u.ctx, helper, "sh", "-c", cmd)
+			c.Stdin = u.stream.Stdin
+			c.Stdout = u.stream.Stdout
+			c.Stderr = u.stream.Stderr
+			return c.Run()
+		}
+	}
+
+	return u.Run(cmd)
 }
 
 func (u *UnixDispatcher) WithStream(stream Streamer) Dispatcher {
