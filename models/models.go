@@ -37,6 +37,7 @@ type Package struct {
 }
 
 type Task struct {
-	Task string `mapstructure:"task"`
-	Cmd  string `mapstructure:"cmd"`
+	Task       string `mapstructure:"task"`
+	Cmd        string `mapstructure:"cmd"`
+	Privileged bool   `mapstructure:"privileged"`
 }
