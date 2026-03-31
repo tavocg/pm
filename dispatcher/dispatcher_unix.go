@@ -23,6 +23,10 @@ func NewUnixDispatcher(ctx context.Context) *UnixDispatcher {
 }
 
 func (u *UnixDispatcher) Run(cmd string) error {
+	if cmd == "" {
+		return nil
+	}
+
 	c := exec.CommandContext(u.ctx, "sh", "-c", cmd)
 	c.Stdin = u.stream.Stdin
 	c.Stdout = u.stream.Stdout
@@ -31,6 +35,10 @@ func (u *UnixDispatcher) Run(cmd string) error {
 }
 
 func (u *UnixDispatcher) RunAsPrivileged(cmd string) error {
+	if cmd == "" {
+		return nil
+	}
+
 	if os.Geteuid() == 0 {
 		return u.Run(cmd)
 	}
