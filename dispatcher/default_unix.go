@@ -5,5 +5,5 @@ package dispatcher
 import "context"
 
 func DefaultDispatcher(ctx context.Context) Dispatcher {
-	return NewUnixDispatcher(ctx)
+	return NewUnixDispatcher(ctx).WithStream(DefaultPrettyStreamer())
 }

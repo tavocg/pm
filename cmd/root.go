@@ -30,6 +30,8 @@ import (
 
 var (
 	cfgFile string
+	quiet   bool
+	verbose bool
 	orch    *models.Orchestrator
 )
 
@@ -58,10 +60,9 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pm.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "run without command output")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "show full command output")
+	rootCmd.MarkFlagsMutuallyExclusive("quiet", "verbose")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -112,6 +113,12 @@ func initOrchestrator() {
 
 	ctx := context.Background()
 	disp := dispatcher.DefaultDispatcher(ctx)
+	switch {
+	case quiet:
+		disp = disp.WithStream(dispatcher.DefaultSilentStreamer())
+	case verbose:
+		disp = disp.WithStream(dispatcher.DefaultVerboseStreamer())
+	}
 
 	params := &models.OrchestratorParams{
 		Cfg:        &cfg,

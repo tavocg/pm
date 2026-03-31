@@ -1,9 +1,8 @@
 package dispatcher
 
-import "os"
+import "os/exec"
 
-type Streamer struct {
-	Stdin  *os.File
-	Stdout *os.File
-	Stderr *os.File
+type Streamer interface {
+	Prepare(cmd *exec.Cmd) error
+	Finish(runErr error) error
 }

@@ -14,11 +14,7 @@ type UnixDispatcher struct {
 }
 
 func NewUnixDispatcher(ctx context.Context) *UnixDispatcher {
-	stream := Streamer{
-		Stdin:  os.Stdin,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-	}
+	stream := DefaultVerboseStreamer()
 	return &UnixDispatcher{ctx: ctx, stream: stream}
 }
 
@@ -28,10 +24,15 @@ func (u *UnixDispatcher) Run(cmd string) error {
 	}
 
 	c := exec.CommandContext(u.ctx, "sh", "-c", cmd)
-	c.Stdin = u.stream.Stdin
-	c.Stdout = u.stream.Stdout
-	c.Stderr = u.stream.Stderr
-	return c.Run()
+	if err := u.stream.Prepare(c); err != nil {
+		return err
+	}
+
+	runErr := c.Run()
+	if err := u.stream.Finish(runErr); err != nil {
+		return err
+	}
+	return runErr
 }
 
 func (u *UnixDispatcher) RunAsPrivileged(cmd string) error {
@@ -46,17 +47,22 @@ func (u *UnixDispatcher) RunAsPrivileged(cmd string) error {
 	for _, helper := range []string{"doas", "sudo"} {
 		if _, err := exec.LookPath(helper); err == nil {
 			c := exec.CommandContext(u.ctx, helper, "sh", "-c", cmd)
-			c.Stdin = u.stream.Stdin
-			c.Stdout = u.stream.Stdout
-			c.Stderr = u.stream.Stderr
-			return c.Run()
+			if err := u.stream.Prepare(c); err != nil {
+				return err
+			}
+
+			runErr := c.Run()
+			if err := u.stream.Finish(runErr); err != nil {
+				return err
+			}
+			return runErr
 		}
 	}
 
 	return u.Run(cmd)
 }
 
-func (u *UnixDispatcher) WithStream(stream Streamer) Dispatcher {
-	u.stream = stream
+func (u *UnixDispatcher) WithStream(streamer Streamer) Dispatcher {
+	u.stream = streamer
 	return u
 }
