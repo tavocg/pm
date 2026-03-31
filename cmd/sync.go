@@ -4,9 +4,6 @@ Copyright © 2026 Gustavo Calvo <tavo@tavo.cr>
 package cmd
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +17,7 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: sync,
+	RunE: sync,
 }
 
 func init() {
@@ -35,11 +32,8 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// syncCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
-	orch.SyncRemotes()
 }
 
-func sync(cmd *cobra.Command, args []string) {
-	fmt.Println("Print: " + strings.Join(args, " "))
-	fmt.Println("Print: " + strings.Join(args, " "))
+func sync(cmd *cobra.Command, args []string) error {
+	return orch.SyncRemotes()
 }

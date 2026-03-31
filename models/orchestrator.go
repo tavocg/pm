@@ -6,11 +6,15 @@ import (
 	"os/exec"
 )
 
-func (o *Orchestrator) SyncRemotes() {
-	o.runTask(syncRemotesTask)
+func (o *Orchestrator) SyncRemotes() error {
+	return o.runTask(syncRemotesTask)
 }
 
 func NewOrchestrator(params *OrchestratorParams) (*Orchestrator, error) {
+	if params == nil {
+		return nil, errors.New("nil params")
+	}
+
 	if params.Cfg == nil {
 		return nil, errors.New("nil config")
 	}
