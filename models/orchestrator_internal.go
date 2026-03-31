@@ -1,7 +1,8 @@
 package models
 
 const (
-	syncRemotesTask taskStr = "sync-remotes"
+	syncRemotesTask   taskStr = "sync-remotes"
+	updateRemotesTask taskStr = "update-remotes"
 )
 
 func (o *Orchestrator) runTask(task taskStr) error {

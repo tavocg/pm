@@ -6,6 +6,13 @@ import (
 	"os/exec"
 )
 
+func (o *Orchestrator) UpdateRemotes() error {
+	if err := o.SyncRemotes(); err != nil {
+		return err
+	}
+	return o.runTask(updateRemotesTask)
+}
+
 func (o *Orchestrator) SyncRemotes() error {
 	return o.runTask(syncRemotesTask)
 }
