@@ -12,16 +12,18 @@ func (o *Orchestrator) runTask(task taskStr) error {
 				continue
 			}
 
+			cmd := o.params.Dispatcher.Cmd(t.Cmd)
 			if t.Privileged {
-				if err := o.params.Dispatcher.RunAsPrivileged(t.Cmd); err != nil {
-					return err
-				}
-			} else {
-				if err := o.params.Dispatcher.Run(t.Cmd); err != nil {
-					return err
-				}
+				cmd = cmd.WithPrivileged()
 			}
 
+			if t.Interactive {
+				cmd = cmd.WithInteractive()
+			}
+
+			if err := o.params.Dispatcher.Run(cmd); err != nil {
+				return err
+			}
 		}
 	}
 
