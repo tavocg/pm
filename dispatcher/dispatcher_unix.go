@@ -14,7 +14,7 @@ type UnixDispatcher struct {
 }
 
 func NewUnixDispatcher(ctx context.Context) *UnixDispatcher {
-	stream := DefaultStrictStreamer()
+	stream := DefaultVerboseStreamer()
 	return &UnixDispatcher{ctx: ctx, stream: stream}
 }
 

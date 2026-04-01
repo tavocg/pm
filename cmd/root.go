@@ -112,7 +112,7 @@ func initOrchestrator() {
 	viper.Unmarshal(&cfg)
 
 	ctx := context.Background()
-	disp := dispatcher.DefaultDispatcher(ctx)
+	disp := dispatcher.DefaultDispatcher(ctx).WithStream(dispatcher.DefaultStrictStreamer())
 	switch {
 	case quiet:
 		disp = disp.WithStream(dispatcher.DefaultSilentStreamer())
