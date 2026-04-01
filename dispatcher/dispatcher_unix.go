@@ -76,7 +76,7 @@ func (u *UnixDispatcher) runNonInteractivePrivileged(command string) error {
 			return pinErr
 		}
 
-		return u.runCommand(strings.NewReader(pin+"\n"), sudoHelper.path, "-S", "-p", "", "sh", "-c", command)
+		return u.runCommand(strings.NewReader(pin+"\n"), sudoHelper.path, "-S", "-p", "", "-k", "sh", "-c", command)
 	}
 
 	return u.runShell(command)
