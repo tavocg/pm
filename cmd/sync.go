@@ -4,15 +4,19 @@ Copyright © 2026 Gustavo Calvo <tavo@tavo.cr>
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
 // syncCmd represents the sync command
 var syncCmd = &cobra.Command{
-	Use:   "sync",
-	Short: "Sync package managers",
-	Long:  `sync fetches latest remote data.`,
-	RunE:  sync,
+	Use:          "sync",
+	Aliases:      []string{"s"},
+	Short:        "Sync package managers",
+	Long:         `sync fetches latest remote data.`,
+	Run:          sync,
+	SilenceUsage: true,
 }
 
 func init() {
@@ -29,6 +33,8 @@ func init() {
 	// syncCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func sync(cmd *cobra.Command, args []string) error {
-	return orch.SyncRemotes()
+func sync(cmd *cobra.Command, args []string) {
+	if err := orch.SyncRemotes(); err != nil {
+		os.Exit(1)
+	}
 }

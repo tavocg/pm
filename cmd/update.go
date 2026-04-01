@@ -4,15 +4,19 @@ Copyright © 2026 Gustavo Calvo <tavo@tavo.cr>
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
 // updateCmd represents the update command
 var updateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update package managers",
-	Long:  `update runs sync tasks and then updates the package managers.`,
-	RunE:  update,
+	Use:          "update",
+	Aliases:      []string{"up", "u"},
+	Short:        "Update package managers",
+	Long:         `update runs sync tasks and then updates the package managers.`,
+	Run:          update,
+	SilenceUsage: true,
 }
 
 func init() {
@@ -29,6 +33,8 @@ func init() {
 	// updateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func update(cmd *cobra.Command, args []string) error {
-	return orch.UpdateRemotes()
+func update(cmd *cobra.Command, args []string) {
+	if err := orch.UpdateRemotes(); err != nil {
+		os.Exit(1)
+	}
 }
