@@ -8,12 +8,18 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
 type UnixDispatcher struct {
 	ctx    context.Context
 	stream Streamer
+}
+
+type privilegeHelper struct {
+	path string
+	kind string
 }
 
 func NewUnixDispatcher(ctx context.Context) *UnixDispatcher {
@@ -46,10 +52,8 @@ func (u *UnixDispatcher) runShell(command string) error {
 }
 
 func (u *UnixDispatcher) runInteractivePrivileged(command string) error {
-	for _, helper := range []string{"doas", "sudo"} {
-		if _, err := exec.LookPath(helper); err == nil {
-			return u.runCommand(nil, helper, "sh", "-c", command)
-		}
+	for _, helper := range findPrivilegeHelpers() {
+		return u.runCommand(nil, helper.path, "sh", "-c", command)
 	}
 
 	return u.runShell(command)
@@ -60,15 +64,19 @@ func (u *UnixDispatcher) runNonInteractivePrivileged(command string) error {
 		return u.runCommand(nil, "pkexec", "sh", "-c", command)
 	}
 
+	helpers := findPrivilegeHelpers()
 	if _, err := exec.LookPath("pinentry"); err == nil {
+		sudoHelper, ok := findPinentryCapableHelper(helpers)
+		if !ok {
+			return u.runShell(command)
+		}
+
 		pin, pinErr := u.readPin()
 		if pinErr != nil {
 			return pinErr
 		}
 
-		if _, err := exec.LookPath("sudo"); err == nil {
-			return u.runCommand(strings.NewReader(pin+"\n"), "sudo", "-S", "-p", "", "sh", "-c", command)
-		}
+		return u.runCommand(strings.NewReader(pin+"\n"), sudoHelper.path, "-S", "-p", "", "sh", "-c", command)
 	}
 
 	return u.runShell(command)
@@ -124,6 +132,60 @@ func parsePinentryOutput(output string) string {
 	}
 
 	return ""
+}
+
+func findPrivilegeHelpers() []privilegeHelper {
+	helpers := make([]privilegeHelper, 0, 2)
+	seen := map[string]struct{}{}
+
+	for _, name := range []string{"doas", "sudo"} {
+		path, err := exec.LookPath(name)
+		if err != nil {
+			continue
+		}
+
+		resolved := path
+		if realPath, err := filepath.EvalSymlinks(path); err == nil && realPath != "" {
+			resolved = realPath
+		}
+
+		if _, ok := seen[resolved]; ok {
+			continue
+		}
+		seen[resolved] = struct{}{}
+
+		helpers = append(helpers, privilegeHelper{
+			path: resolved,
+			kind: privilegeHelperKind(resolved),
+		})
+	}
+
+	return helpers
+}
+
+func privilegeHelperKind(path string) string {
+	switch filepath.Base(path) {
+	case "sudo":
+		return "sudo"
+	case "doas", "opendoas":
+		return "doas"
+	default:
+		return filepath.Base(path)
+	}
+}
+
+func (h privilegeHelper) supportsStdinPassword() bool {
+	return h.kind == "sudo"
+}
+
+func findPinentryCapableHelper(helpers []privilegeHelper) (privilegeHelper, bool) {
+	for _, helper := range helpers {
+		if helper.supportsStdinPassword() {
+			return helper, true
+		}
+	}
+
+	return privilegeHelper{}, false
 }
 
 func (u *UnixDispatcher) WithStream(streamer Streamer) Dispatcher {
