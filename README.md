@@ -41,13 +41,4 @@ managers:
       - task: update-remotes
         cmd: apt-get full-upgrade -y
         privileged: true
-    remotes:
-      - remote: trixie # Arbitrary name
-        packages:      # Some example packages
-          # media
-          - package: mpv
-          - package: vlc
-          # tools
-          - package: curl
-          - package: groff
 ```
